@@ -138,7 +138,7 @@ public static class Program
                 float distance = Vector2.Distance(particle_a.position, particle_b.position);
                 if (distance < KERNEL_RADIUS)
                 {
-                    pressure_force += -Vector2.Normalize(difference) * PARTICLE_MASS * (particle_a.pressure + particle_b.pressure) / (2.f * particle_b.density) * SPIKY_GRAD * pow(KERNEL_RADIUS - distance, 3.f);
+                    pressure_force += -Vector2.Normalize(difference) * PARTICLE_MASS * (particle_a.pressure + particle_b.pressure) / (2.0f * particle_b.density) * SPIKY_GRAD * MathF.Pow(KERNEL_RADIUS - distance, 3.0f);
                     viscosity_force += VISCOSITY * PARTICLE_MASS * (particle_b.velocity - particle_a.velocity) / particle_b.density * VISC_LAP * (KERNEL_RADIUS - distance);
                 }
             }
