@@ -1,0 +1,9 @@
+# editors
+.vscode/
+.idea/
+.vs/
+.fleet/
+
+# dotnet
+bin/
+obj/
