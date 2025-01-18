@@ -77,20 +77,24 @@ public static class Program
     static void WindowLoad()
     {
         input = window.CreateInput();
-        input.Keyboards[0].KeyDown += OnKeyDown;
         gl = GL.GetApi(window);
         gl.ClearColor(Color.White);
         gl.Enable(EnableCap.PointSmooth);
 
         // set onkeydown callback
+        input.Keyboards[0].KeyDown += OnKeyDown;
 
         // spawn particles
+        SpawnParticles();
     }
 
     static void WindowRender(double deltaTime)
     {
         // update
+        Update();
+
         // render
+        Render();
     }
 
     static void SpawnParticles()
