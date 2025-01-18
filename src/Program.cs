@@ -7,7 +7,7 @@ using Silk.NET.Windowing;
 
 namespace Project;
 
-public struct Particle
+public class Particle
 {
     public Vector2 position;
     public Vector2 velocity;
