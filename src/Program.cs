@@ -104,7 +104,7 @@ public static class Program
 
     static void ComputeDensityPressure()
     {
-        for (int i = 0; i < particles.Count; i++)
+        Parallel.For(0, particles.Count, (i) =>
         {
             var particle_a = particles[i];
             particle_a.density = 0.0f;
@@ -116,12 +116,12 @@ public static class Program
                 if (r2 < KERNEL_RADIUS_SQR) particle_a.density += PARTICLE_MASS * POLY6 * MathF.Pow(KERNEL_RADIUS_SQR - r2, 3.0f);
             }
             particle_a.pressure = GAS_CONSTANT * (particle_a.density - REST_DENSITY);
-        }
+        });
     }
 
     static void ComputeForces()
     {
-        for (int i = 0; i < particles.Count; i++)
+        Parallel.For(0, particles.Count, (i) =>
         {
             var particle_a = particles[i];
 
@@ -142,12 +142,12 @@ public static class Program
             }
             Vector2 gravity_force = new Vector2(0, GRAVITY) * PARTICLE_MASS / particle_a.density;
             particle_a.force = pressure_force + viscosity_force + gravity_force;
-        }
+        });
     }
 
     static void Integrate()
     {
-        for (int i = 0; i < particles.Count; i++)
+        Parallel.For(0, particles.Count, (i) =>
         {
             var particle = particles[i];
 
@@ -176,7 +176,7 @@ public static class Program
                 particle.velocity.Y *= BOUND_DAMPING;
                 particle.position.Y = VIEW_HEIGHT - BOUNDARY_EPSILON;
             }
-        }
+        });
     }
 
     static void UpdateSimulation()
