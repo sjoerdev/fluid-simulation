@@ -189,7 +189,7 @@ public static class Program
                 if (!spatialHashGrid.ContainsKey(neighborHash)) continue;
                 foreach (var particle_b in spatialHashGrid[neighborHash])
                 {
-                    if (particle_a.Equals(particle_b)) continue;
+                    if (particle_a == particle_b) continue;
                     Vector2 difference = particle_b.position - particle_a.position;
                     float distance = Vector2.Distance(particle_a.position, particle_b.position);
                     if (distance < KERNEL_RADIUS)
