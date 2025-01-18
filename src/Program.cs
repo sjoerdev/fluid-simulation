@@ -120,4 +120,30 @@ public static class Program
             particle_a.pressure = GAS_CONSTANT * (particle_a.density - REST_DENSITY);
         }
     }
+
+    static void ComputeForces()
+    {
+        for (int i = 0; i < particles.Count; i++)
+        {
+            var particle_a = particles[i];
+
+            Vector2 pressure_force = new(0.0f, 0.0f);
+            Vector2 viscosity_force = new(0.0f, 0.0f);
+            for (int j = 0; j < particles.Count; j++)
+            {
+                var particle_b = particles[j];
+                if (particle_a.Equals(particle_b)) continue;
+
+                Vector2 difference = particle_b.position - particle_a.position;
+                float distance = Vector2.Distance(particle_a.position, particle_b.position);
+                if (distance < KERNEL_RADIUS)
+                {
+                    pressure_force += -Vector2.Normalize(difference) * PARTICLE_MASS * (particle_a.pressure + particle_b.pressure) / (2.f * particle_b.density) * SPIKY_GRAD * pow(KERNEL_RADIUS - distance, 3.f);
+                    viscosity_force += VISCOSITY * PARTICLE_MASS * (particle_b.velocity - particle_a.velocity) / particle_b.density * VISC_LAP * (KERNEL_RADIUS - distance);
+                }
+            }
+            Vector2 gravity_force = new Vector2(0, GRAVITY) * PARTICLE_MASS / particle_a.density;
+            particle_a.force = pressure_force + viscosity_force + gravity_force;
+        }
+    }
 }
