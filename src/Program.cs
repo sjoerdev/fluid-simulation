@@ -180,4 +180,23 @@ public static class Program
             }
         }
     }
+
+    static void Update()
+    {
+        ComputeDensityPressure();
+        ComputeForces();
+        Integrate();
+    }
+
+    static void Render()
+    {
+        gl.Clear(ClearBufferMask.ColorBufferBit);
+        gl.LoadIdentity();
+        gl.Ortho(0, VIEW_WIDTH, 0, VIEW_HEIGHT, 0, 1);
+        gl.Color4(0.2f, 0.2f, 0.2f, 1);
+        gl.Begin(GLEnum.Points);
+        foreach (var particle in particles) gl.Vertex2(particle.position.X, particle.position.Y);
+        gl.End();
+        window.SwapBuffers();
+    }
 }
