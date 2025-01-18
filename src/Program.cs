@@ -64,13 +64,12 @@ public static class Program
     static void Main()
     {
         var options = WindowOptions.Default;
+        options.API = new(ContextAPI.OpenGL, new APIVersion(2, 1));
         options.Size = new Vector2D<int>(WINDOW_WIDTH, WINDOW_HEIGHT);
         options.Title = "Fluid Simulation";
         window = Window.Create(options);
-
         window.Load += Load;
         window.Render += Render;
-
         window.Run();
         window.Dispose();
     }
