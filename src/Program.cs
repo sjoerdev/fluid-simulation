@@ -77,6 +77,7 @@ public static class Program
     static void WindowLoad()
     {
         input = window.CreateInput();
+        input.Keyboards[0].KeyDown += OnKeyDown;
         gl = GL.GetApi(window);
         gl.ClearColor(Color.White);
         gl.Enable(EnableCap.PointSmooth);
@@ -198,5 +199,27 @@ public static class Program
         foreach (var particle in particles) gl.Vertex2(particle.position.X, particle.position.Y);
         gl.End();
         window.SwapBuffers();
+    }
+
+    static void OnKeyDown(IKeyboard keyboard, Key key, int idk)
+    {
+        if (key == Key.Space && particles.Count() < MAX_PARTICLES)
+        {
+            for (float y = VIEW_HEIGHT / 1.5f - VIEW_HEIGHT / 5.0f; y < VIEW_HEIGHT / 1.5f + VIEW_HEIGHT / 5.0f; y += KERNEL_RADIUS * 0.95f)
+            {
+                for (float x = VIEW_WIDTH / 2.0f - VIEW_HEIGHT / 5.0f; x <= VIEW_WIDTH / 2.0f + VIEW_HEIGHT / 5.0f; x += KERNEL_RADIUS * 0.95f)
+                {
+                    if (particles.Count() < MAX_PARTICLES)
+                    {
+                        particles.Add(new Particle(x, y));
+                    }
+                }
+            }
+        }
+        else if (key == Key.R)
+        {
+            particles.Clear();
+            SpawnParticles();
+        }
     }
 }
