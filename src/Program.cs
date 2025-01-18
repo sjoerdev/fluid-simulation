@@ -54,7 +54,6 @@ public static class Program
     static List<Particle> particles = [];
     static int MAX_PARTICLES = 2500;
     static int DAM_PARTICLES = 500;
-    static int BLOCK_PARTICLES = 250;
 
     // projection
     static int WINDOW_WIDTH = 800;
@@ -65,36 +64,29 @@ public static class Program
     static void Main()
     {
         var options = WindowOptions.Default;
-        options.Size = new Vector2D<int>(1280, 720);
+        options.Size = new Vector2D<int>(WINDOW_WIDTH, WINDOW_HEIGHT);
         options.Title = "Fluid Simulation";
         window = Window.Create(options);
-        window.Load += WindowLoad;
-        window.Render += WindowRender;
+
+        window.Load += Load;
+        window.Render += Render;
+
         window.Run();
         window.Dispose();
     }
 
-    static void WindowLoad()
+    static void Load()
     {
         input = window.CreateInput();
-        gl = GL.GetApi(window);
-        gl.ClearColor(Color.White);
-        gl.Enable(EnableCap.PointSmooth);
-
-        // set onkeydown callback
         input.Keyboards[0].KeyDown += OnKeyDown;
-
-        // spawn particles
+        gl = GL.GetApi(window);
         SpawnParticles();
     }
 
-    static void WindowRender(double deltaTime)
+    static void Render(double deltaTime)
     {
-        // update
-        Update();
-
-        // render
-        Render();
+        UpdateSimulation();
+        RenderSimulation();
     }
 
     static void SpawnParticles()
@@ -186,22 +178,25 @@ public static class Program
         }
     }
 
-    static void Update()
+    static void UpdateSimulation()
     {
         ComputeDensityPressure();
         ComputeForces();
         Integrate();
     }
 
-    static void Render()
+    static void RenderSimulation()
     {
+        gl.ClearColor(Color.White);
         gl.Clear(ClearBufferMask.ColorBufferBit);
+        
         gl.LoadIdentity();
         gl.Ortho(0, VIEW_WIDTH, 0, VIEW_HEIGHT, 0, 1);
-        gl.Color4(0.2f, 0.2f, 0.2f, 1);
+        gl.Color4(1, 0, 0, 1);
         gl.Begin(GLEnum.Points);
         foreach (var particle in particles) gl.Vertex2(particle.position.X, particle.position.Y);
         gl.End();
+
         window.SwapBuffers();
     }
 
@@ -220,7 +215,8 @@ public static class Program
                 }
             }
         }
-        else if (key == Key.R)
+        
+        if (key == Key.R)
         {
             particles.Clear();
             SpawnParticles();
