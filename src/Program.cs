@@ -146,4 +146,38 @@ public static class Program
             particle_a.force = pressure_force + viscosity_force + gravity_force;
         }
     }
+
+    static void Integrate()
+    {
+        for (int i = 0; i < particles.Count; i++)
+        {
+            var particle = particles[i];
+
+            // forward Euler integration
+            particle.velocity += INTIGRATION_TIMESTEP * particle.force / particle.density;
+            particle.position += INTIGRATION_TIMESTEP * particle.velocity;
+
+            // enforce boundary conditions
+            if (particle.position.X - BOUNDARY_EPSILON < 0.0f)
+            {
+                particle.velocity.X *= BOUND_DAMPING;
+                particle.position.X = BOUNDARY_EPSILON;
+            }
+            if (particle.position.X + BOUNDARY_EPSILON > VIEW_WIDTH)
+            {
+                particle.velocity.X *= BOUND_DAMPING;
+                particle.position.X = VIEW_WIDTH - BOUNDARY_EPSILON;
+            }
+            if (particle.position.Y - BOUNDARY_EPSILON < 0.0f)
+            {
+                particle.velocity.Y *= BOUND_DAMPING;
+                particle.position.Y = BOUNDARY_EPSILON;
+            }
+            if (particle.position.Y + BOUNDARY_EPSILON > VIEW_HEIGHT)
+            {
+                particle.velocity.Y *= BOUND_DAMPING;
+                particle.position.Y = VIEW_HEIGHT - BOUNDARY_EPSILON;
+            }
+        }
+    }
 }
