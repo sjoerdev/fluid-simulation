@@ -52,7 +52,7 @@ public static class Program
 
     // particles
     static List<Particle> particles = [];
-    static int MAX_PARTICLES = 2500;
+    static int MAX_PARTICLES = 10000;
     static int DAM_PARTICLES = 500;
 
     // projection
@@ -60,6 +60,51 @@ public static class Program
     static int WINDOW_HEIGHT = 600;
     static float VIEW_WIDTH = 1.5f * 800.0f;
     static float VIEW_HEIGHT = 1.5f * 600.0f;
+
+    // spatial hash grid
+    static float CELL_SIZE = KERNEL_RADIUS;
+    static Dictionary<int, List<Particle>> spatialHashGrid = [];
+
+    static Vector2 CellFromParticle(Particle particle)
+    {
+        int x = (int)(particle.position.X / CELL_SIZE);
+        int y = (int)(particle.position.Y / CELL_SIZE);
+        return new Vector2(x, y);
+    }
+
+    static int HashFromCell(Vector2 cell)
+    {
+        const int PRIME1 = 73856093;
+        const int PRIME2 = 19349663;
+        return ((int)cell.X * PRIME1) ^ ((int)cell.Y * PRIME2);
+    }
+
+    static void BuildHashGrid()
+    {
+        spatialHashGrid.Clear();
+        foreach (var particle in particles)
+        {
+            var cell = CellFromParticle(particle);
+            int hash = HashFromCell(cell);
+            if (!spatialHashGrid.ContainsKey(hash)) spatialHashGrid[hash] = [];
+            spatialHashGrid[hash].Add(particle);
+        }
+    }
+
+    static List<int> GetParticleNeighborHashes(Vector2 cell)
+    {
+        List<int> neighborHashes = [];
+        for (int xo = -1; xo <= 1; xo++)
+        {
+            for (int yo = -1; yo <= 1; yo++)
+            {
+                var offset = new Vector2(xo, yo);
+                var hash = HashFromCell(cell + offset);
+                neighborHashes.Add(hash);
+            }
+        }
+        return neighborHashes;
+    }
 
     static void Main()
     {
@@ -88,6 +133,7 @@ public static class Program
     {
         UpdateSimulation();
         RenderSimulation();
+        Console.WriteLine(particles.Count);
     }
 
     static void SpawnParticles()
@@ -108,13 +154,20 @@ public static class Program
         {
             var particle_a = particles[i];
             particle_a.density = 0.0f;
-            for (int j = 0; j < particles.Count; j++)
+
+            var cell = CellFromParticle(particle_a);
+            List<int> neighborHashes = GetParticleNeighborHashes(cell);
+            foreach (int neighborHash in neighborHashes)
             {
-                var particle_b = particles[j];
-                Vector2 rij = particle_b.position - particle_a.position;
-                float r2 = Vector2.Dot(rij, rij);
-                if (r2 < KERNEL_RADIUS_SQR) particle_a.density += PARTICLE_MASS * POLY6 * MathF.Pow(KERNEL_RADIUS_SQR - r2, 3.0f);
+                if (!spatialHashGrid.ContainsKey(neighborHash)) continue;
+                foreach (var particle_b in spatialHashGrid[neighborHash])
+                {
+                    Vector2 difference = particle_b.position - particle_a.position;
+                    float dotproduct = Vector2.Dot(difference, difference);
+                    if (dotproduct < KERNEL_RADIUS_SQR) particle_a.density += PARTICLE_MASS * POLY6 * MathF.Pow(KERNEL_RADIUS_SQR - dotproduct, 3.0f);
+                }
             }
+
             particle_a.pressure = GAS_CONSTANT * (particle_a.density - REST_DENSITY);
         });
     }
@@ -124,22 +177,27 @@ public static class Program
         Parallel.For(0, particles.Count, (i) =>
         {
             var particle_a = particles[i];
-
             Vector2 pressure_force = new(0.0f, 0.0f);
             Vector2 viscosity_force = new(0.0f, 0.0f);
-            for (int j = 0; j < particles.Count; j++)
-            {
-                var particle_b = particles[j];
-                if (particle_a.Equals(particle_b)) continue;
 
-                Vector2 difference = particle_b.position - particle_a.position;
-                float distance = Vector2.Distance(particle_a.position, particle_b.position);
-                if (distance < KERNEL_RADIUS)
+            var cell = CellFromParticle(particle_a);
+            List<int> neighborHashes = GetParticleNeighborHashes(cell);
+            foreach (int neighborHash in neighborHashes)
+            {
+                if (!spatialHashGrid.ContainsKey(neighborHash)) continue;
+                foreach (var particle_b in spatialHashGrid[neighborHash])
                 {
-                    pressure_force += -Vector2.Normalize(difference) * PARTICLE_MASS * (particle_a.pressure + particle_b.pressure) / (2.0f * particle_b.density) * SPIKY_GRAD * MathF.Pow(KERNEL_RADIUS - distance, 3.0f);
-                    viscosity_force += VISCOSITY * PARTICLE_MASS * (particle_b.velocity - particle_a.velocity) / particle_b.density * VISC_LAP * (KERNEL_RADIUS - distance);
+                    if (particle_a.Equals(particle_b)) continue;
+                    Vector2 difference = particle_b.position - particle_a.position;
+                    float distance = Vector2.Distance(particle_a.position, particle_b.position);
+                    if (distance < KERNEL_RADIUS)
+                    {
+                        pressure_force += -Vector2.Normalize(difference) * PARTICLE_MASS * (particle_a.pressure + particle_b.pressure) / (2.0f * particle_b.density) * SPIKY_GRAD * MathF.Pow(KERNEL_RADIUS - distance, 3.0f);
+                        viscosity_force += VISCOSITY * PARTICLE_MASS * (particle_b.velocity - particle_a.velocity) / particle_b.density * VISC_LAP * (KERNEL_RADIUS - distance);
+                    }
                 }
             }
+
             Vector2 gravity_force = new Vector2(0, GRAVITY) * PARTICLE_MASS / particle_a.density;
             particle_a.force = pressure_force + viscosity_force + gravity_force;
         });
@@ -181,6 +239,7 @@ public static class Program
 
     static void UpdateSimulation()
     {
+        BuildHashGrid();
         ComputeDensityPressure();
         ComputeForces();
         Integrate();
