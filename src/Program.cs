@@ -80,6 +80,8 @@ public static class Program
         input = window.CreateInput();
         input.Keyboards[0].KeyDown += OnKeyDown;
         gl = GL.GetApi(window);
+        gl.Enable(GLEnum.PointSmooth);
+        gl.PointSize(KERNEL_RADIUS / 2.0f);
         SpawnParticles();
     }
 
@@ -187,9 +189,11 @@ public static class Program
 
     static void RenderSimulation()
     {
-        gl.ClearColor(Color.White);
+        // clear screen
+        gl.ClearColor(Color.CornflowerBlue);
         gl.Clear(ClearBufferMask.ColorBufferBit);
         
+        // render particles as points
         gl.LoadIdentity();
         gl.Ortho(0, VIEW_WIDTH, 0, VIEW_HEIGHT, 0, 1);
         gl.Color4(1, 0, 0, 1);
@@ -197,6 +201,7 @@ public static class Program
         foreach (var particle in particles) gl.Vertex2(particle.position.X, particle.position.Y);
         gl.End();
 
+        // swap buffers
         window.SwapBuffers();
     }
 
