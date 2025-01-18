@@ -52,14 +52,15 @@ public static class Program
 
     // particles
     static List<Particle> particles = [];
-    static int MAX_PARTICLES = 10000;
+    static int MAX_PARTICLES = 16000;
     static int DAM_PARTICLES = 500;
 
     // projection
-    static int WINDOW_WIDTH = 800;
-    static int WINDOW_HEIGHT = 600;
-    static float VIEW_WIDTH = 1.5f * 800.0f;
-    static float VIEW_HEIGHT = 1.5f * 600.0f;
+    static int POINT_SIZE = (int)(KERNEL_RADIUS / 4f);
+    static int WINDOW_WIDTH = 1280;
+    static int WINDOW_HEIGHT = 720;
+    static float VIEWPORT_WIDTH = 2 * WINDOW_WIDTH;
+    static float VIEWPORT_HEIGHT = 2 * WINDOW_HEIGHT;
 
     // spatial hash grid
     static float CELL_SIZE = KERNEL_RADIUS;
@@ -112,6 +113,7 @@ public static class Program
         options.API = new(ContextAPI.OpenGL, new APIVersion(2, 1));
         options.Size = new Vector2D<int>(WINDOW_WIDTH, WINDOW_HEIGHT);
         options.Title = "Fluid Simulation";
+        options.VSync = true;
         window = Window.Create(options);
         window.Load += Load;
         window.Render += Render;
@@ -125,7 +127,7 @@ public static class Program
         input.Keyboards[0].KeyDown += OnKeyDown;
         gl = GL.GetApi(window);
         gl.Enable(GLEnum.PointSmooth);
-        gl.PointSize(KERNEL_RADIUS / 2.0f);
+        gl.PointSize(POINT_SIZE);
         SpawnParticles();
     }
 
@@ -133,14 +135,14 @@ public static class Program
     {
         UpdateSimulation();
         RenderSimulation();
-        Console.WriteLine(particles.Count);
+        Console.WriteLine(particles.Count + " - " + (1f / (float)deltaTime));
     }
 
     static void SpawnParticles()
     {
-        for (float y = BOUNDARY_EPSILON; y < VIEW_HEIGHT - BOUNDARY_EPSILON * 2.0f; y += KERNEL_RADIUS)
+        for (float y = BOUNDARY_EPSILON; y < VIEWPORT_HEIGHT - BOUNDARY_EPSILON * 2.0f; y += KERNEL_RADIUS)
         {
-            for (float x = VIEW_WIDTH / 4; x <= VIEW_WIDTH / 2; x += KERNEL_RADIUS)
+            for (float x = VIEWPORT_WIDTH / 4; x <= VIEWPORT_WIDTH / 2; x += KERNEL_RADIUS)
             {
                 if (particles.Count() < DAM_PARTICLES) particles.Add(new Particle(x, y));
                 else return;
@@ -219,20 +221,20 @@ public static class Program
                 particle.velocity.X *= BOUND_DAMPING;
                 particle.position.X = BOUNDARY_EPSILON;
             }
-            if (particle.position.X + BOUNDARY_EPSILON > VIEW_WIDTH)
+            if (particle.position.X + BOUNDARY_EPSILON > VIEWPORT_WIDTH)
             {
                 particle.velocity.X *= BOUND_DAMPING;
-                particle.position.X = VIEW_WIDTH - BOUNDARY_EPSILON;
+                particle.position.X = VIEWPORT_WIDTH - BOUNDARY_EPSILON;
             }
             if (particle.position.Y - BOUNDARY_EPSILON < 0.0f)
             {
                 particle.velocity.Y *= BOUND_DAMPING;
                 particle.position.Y = BOUNDARY_EPSILON;
             }
-            if (particle.position.Y + BOUNDARY_EPSILON > VIEW_HEIGHT)
+            if (particle.position.Y + BOUNDARY_EPSILON > VIEWPORT_HEIGHT)
             {
                 particle.velocity.Y *= BOUND_DAMPING;
-                particle.position.Y = VIEW_HEIGHT - BOUNDARY_EPSILON;
+                particle.position.Y = VIEWPORT_HEIGHT - BOUNDARY_EPSILON;
             }
         });
     }
@@ -253,23 +255,20 @@ public static class Program
         
         // render particles as points
         gl.LoadIdentity();
-        gl.Ortho(0, VIEW_WIDTH, 0, VIEW_HEIGHT, 0, 1);
+        gl.Ortho(0, VIEWPORT_WIDTH, 0, VIEWPORT_HEIGHT, 0, 1);
         gl.Color4(1, 0, 0, 1);
         gl.Begin(GLEnum.Points);
         foreach (var particle in particles) gl.Vertex2(particle.position.X, particle.position.Y);
         gl.End();
-
-        // swap buffers
-        window.SwapBuffers();
     }
 
     static void OnKeyDown(IKeyboard keyboard, Key key, int idk)
     {
         if (key == Key.Space && particles.Count() < MAX_PARTICLES)
         {
-            for (float y = VIEW_HEIGHT / 1.5f - VIEW_HEIGHT / 5.0f; y < VIEW_HEIGHT / 1.5f + VIEW_HEIGHT / 5.0f; y += KERNEL_RADIUS * 0.95f)
+            for (float y = VIEWPORT_HEIGHT / 1.5f - VIEWPORT_HEIGHT / 5.0f; y < VIEWPORT_HEIGHT / 1.5f + VIEWPORT_HEIGHT / 5.0f; y += KERNEL_RADIUS * 0.95f)
             {
-                for (float x = VIEW_WIDTH / 2.0f - VIEW_HEIGHT / 5.0f; x <= VIEW_WIDTH / 2.0f + VIEW_HEIGHT / 5.0f; x += KERNEL_RADIUS * 0.95f)
+                for (float x = VIEWPORT_WIDTH / 2.0f - VIEWPORT_HEIGHT / 5.0f; x <= VIEWPORT_WIDTH / 2.0f + VIEWPORT_HEIGHT / 5.0f; x += KERNEL_RADIUS * 0.95f)
                 {
                     if (particles.Count() < MAX_PARTICLES)
                     {
