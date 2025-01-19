@@ -1,7 +1,9 @@
 ## Fluid Simulation
-This is an (sph) fluid simulation.
+This is a smoothed particle hydrodynamics simulation
 - It heavily uses multithreading
-- It uses spatial hasing for improved performance
+- It uses spatial hasing for fast performance
+- The C# code is optimized and readable
+- It can smoothly handle up to 20k particles
 
 ## Showcase
 https://github.com/user-attachments/assets/9e318653-5ec1-4dc7-9071-c8a26ff5f471
