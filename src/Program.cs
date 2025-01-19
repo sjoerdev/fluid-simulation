@@ -56,11 +56,11 @@ public static class Program
     static int DAM_PARTICLES = 500;
 
     // projection
-    static int POINT_SIZE = (int)(KERNEL_RADIUS / 4f);
-    static int WINDOW_WIDTH = 1280;
-    static int WINDOW_HEIGHT = 720;
-    static float VIEWPORT_WIDTH = 2 * WINDOW_WIDTH;
-    static float VIEWPORT_HEIGHT = 2 * WINDOW_HEIGHT;
+    static int POINT_SIZE = (int)(KERNEL_RADIUS / 2f);
+    static int WINDOW_WIDTH = 1920;
+    static int WINDOW_HEIGHT = 1080;
+    static float VIEWPORT_WIDTH = WINDOW_WIDTH;
+    static float VIEWPORT_HEIGHT = WINDOW_HEIGHT;
 
     // spatial hash grid
     static float CELL_SIZE = KERNEL_RADIUS;
@@ -114,6 +114,7 @@ public static class Program
         options.Size = new Vector2D<int>(WINDOW_WIDTH, WINDOW_HEIGHT);
         options.Title = "Fluid Simulation";
         options.VSync = true;
+        options.WindowBorder = WindowBorder.Fixed;
         window = Window.Create(options);
         window.Load += Load;
         window.Render += Render;
@@ -250,13 +251,13 @@ public static class Program
     static void RenderSimulation()
     {
         // clear screen
-        gl.ClearColor(Color.CornflowerBlue);
+        gl.ClearColor(Color.White);
         gl.Clear(ClearBufferMask.ColorBufferBit);
         
         // render particles as points
         gl.LoadIdentity();
         gl.Ortho(0, VIEWPORT_WIDTH, 0, VIEWPORT_HEIGHT, 0, 1);
-        gl.Color4(1, 0, 0, 1);
+        gl.Color4(0, 0, 0, 1);
         gl.Begin(GLEnum.Points);
         foreach (var particle in particles) gl.Vertex2(particle.position.X, particle.position.Y);
         gl.End();
