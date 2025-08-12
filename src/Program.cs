@@ -53,7 +53,6 @@ public static class Program
     // particles
     static List<Particle> particles = [];
     static int MAX_PARTICLES = 16000;
-    static int DAM_PARTICLES = 500;
 
     // projection
     static int POINT_SIZE = (int)(KERNEL_RADIUS / 2f);
@@ -139,12 +138,23 @@ public static class Program
 
     static void SpawnParticles()
     {
-        for (float y = BOUNDARY_EPSILON; y < WINDOW_HEIGHT - BOUNDARY_EPSILON * 2.0f; y += KERNEL_RADIUS)
+        var radius = 400;
+        var center = new Vector2(WINDOW_WIDTH, WINDOW_HEIGHT) / 2f;
+        var random = new Random();
+        var spacing = KERNEL_RADIUS;
+
+        for (float y = center.Y - radius; y <= center.Y + radius; y += spacing)
         {
-            for (float x = WINDOW_WIDTH / 4; x <= WINDOW_WIDTH / 2; x += KERNEL_RADIUS)
+            for (float x = center.X - radius; x <= center.X + radius; x += spacing)
             {
-                if (particles.Count() < DAM_PARTICLES) particles.Add(new Particle(x, y));
-                else return;
+                var ox = (random.NextSingle() - 0.5f) * spacing;
+                var oy = (random.NextSingle() - 0.5f) * spacing;
+                var position = new Vector2(x + ox, y + oy);
+
+                var inside = Vector2.Distance(center, position) <= radius;
+                var notmax = particles.Count < MAX_PARTICLES;
+
+                if (inside && notmax) particles.Add(new Particle(position.X, position.Y));
             }
         }
     }
@@ -263,24 +273,7 @@ public static class Program
 
     static void OnKeyDown(IKeyboard keyboard, Key key, int idk)
     {
-        if (key == Key.Space && particles.Count() < MAX_PARTICLES)
-        {
-            for (float y = WINDOW_HEIGHT / 1.5f - WINDOW_HEIGHT / 5.0f; y < WINDOW_HEIGHT / 1.5f + WINDOW_HEIGHT / 5.0f; y += KERNEL_RADIUS * 0.95f)
-            {
-                for (float x = WINDOW_WIDTH / 2.0f - WINDOW_HEIGHT / 5.0f; x <= WINDOW_WIDTH / 2.0f + WINDOW_HEIGHT / 5.0f; x += KERNEL_RADIUS * 0.95f)
-                {
-                    if (particles.Count() < MAX_PARTICLES)
-                    {
-                        particles.Add(new Particle(x, y));
-                    }
-                }
-            }
-        }
-        
-        if (key == Key.R)
-        {
-            particles.Clear();
-            SpawnParticles();
-        }
+        if (key == Key.Space) SpawnParticles();
+        if (key == Key.R) particles.Clear();
     }
 }
