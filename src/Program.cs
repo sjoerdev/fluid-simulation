@@ -59,8 +59,6 @@ public static class Program
     static int POINT_SIZE = (int)(KERNEL_RADIUS / 2f);
     static int WINDOW_WIDTH = 1920;
     static int WINDOW_HEIGHT = 1080;
-    static float VIEWPORT_WIDTH = WINDOW_WIDTH;
-    static float VIEWPORT_HEIGHT = WINDOW_HEIGHT;
 
     // spatial hash grid
     static float CELL_SIZE = KERNEL_RADIUS;
@@ -141,9 +139,9 @@ public static class Program
 
     static void SpawnParticles()
     {
-        for (float y = BOUNDARY_EPSILON; y < VIEWPORT_HEIGHT - BOUNDARY_EPSILON * 2.0f; y += KERNEL_RADIUS)
+        for (float y = BOUNDARY_EPSILON; y < WINDOW_HEIGHT - BOUNDARY_EPSILON * 2.0f; y += KERNEL_RADIUS)
         {
-            for (float x = VIEWPORT_WIDTH / 4; x <= VIEWPORT_WIDTH / 2; x += KERNEL_RADIUS)
+            for (float x = WINDOW_WIDTH / 4; x <= WINDOW_WIDTH / 2; x += KERNEL_RADIUS)
             {
                 if (particles.Count() < DAM_PARTICLES) particles.Add(new Particle(x, y));
                 else return;
@@ -222,20 +220,20 @@ public static class Program
                 particle.velocity.X *= BOUND_DAMPING;
                 particle.position.X = BOUNDARY_EPSILON;
             }
-            if (particle.position.X + BOUNDARY_EPSILON > VIEWPORT_WIDTH)
+            if (particle.position.X + BOUNDARY_EPSILON > WINDOW_WIDTH)
             {
                 particle.velocity.X *= BOUND_DAMPING;
-                particle.position.X = VIEWPORT_WIDTH - BOUNDARY_EPSILON;
+                particle.position.X = WINDOW_WIDTH - BOUNDARY_EPSILON;
             }
             if (particle.position.Y - BOUNDARY_EPSILON < 0.0f)
             {
                 particle.velocity.Y *= BOUND_DAMPING;
                 particle.position.Y = BOUNDARY_EPSILON;
             }
-            if (particle.position.Y + BOUNDARY_EPSILON > VIEWPORT_HEIGHT)
+            if (particle.position.Y + BOUNDARY_EPSILON > WINDOW_HEIGHT)
             {
                 particle.velocity.Y *= BOUND_DAMPING;
-                particle.position.Y = VIEWPORT_HEIGHT - BOUNDARY_EPSILON;
+                particle.position.Y = WINDOW_HEIGHT - BOUNDARY_EPSILON;
             }
         });
     }
@@ -256,7 +254,7 @@ public static class Program
         
         // render particles as points
         gl.LoadIdentity();
-        gl.Ortho(0, VIEWPORT_WIDTH, 0, VIEWPORT_HEIGHT, 0, 1);
+        gl.Ortho(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, 0, 1);
         gl.Color4(0, 0, 0, 1);
         gl.Begin(GLEnum.Points);
         foreach (var particle in particles) gl.Vertex2(particle.position.X, particle.position.Y);
@@ -267,9 +265,9 @@ public static class Program
     {
         if (key == Key.Space && particles.Count() < MAX_PARTICLES)
         {
-            for (float y = VIEWPORT_HEIGHT / 1.5f - VIEWPORT_HEIGHT / 5.0f; y < VIEWPORT_HEIGHT / 1.5f + VIEWPORT_HEIGHT / 5.0f; y += KERNEL_RADIUS * 0.95f)
+            for (float y = WINDOW_HEIGHT / 1.5f - WINDOW_HEIGHT / 5.0f; y < WINDOW_HEIGHT / 1.5f + WINDOW_HEIGHT / 5.0f; y += KERNEL_RADIUS * 0.95f)
             {
-                for (float x = VIEWPORT_WIDTH / 2.0f - VIEWPORT_HEIGHT / 5.0f; x <= VIEWPORT_WIDTH / 2.0f + VIEWPORT_HEIGHT / 5.0f; x += KERNEL_RADIUS * 0.95f)
+                for (float x = WINDOW_WIDTH / 2.0f - WINDOW_HEIGHT / 5.0f; x <= WINDOW_WIDTH / 2.0f + WINDOW_HEIGHT / 5.0f; x += KERNEL_RADIUS * 0.95f)
                 {
                     if (particles.Count() < MAX_PARTICLES)
                     {
