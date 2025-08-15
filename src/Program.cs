@@ -72,6 +72,98 @@ public static unsafe class Program
     static float CELL_SIZE = KERNEL_RADIUS;
     static Dictionary<int, List<Particle>> spatialHashGrid = [];
 
+    static void Main()
+    {
+        var options = WindowOptions.Default;
+        options.API = new(ContextAPI.OpenGL, new APIVersion(3, 3));
+        options.Size = new Vector2D<int>(WINDOW_WIDTH, WINDOW_HEIGHT);
+        options.Title = "Fluid Simulation";
+        options.VSync = true;
+        options.WindowBorder = WindowBorder.Fixed;
+        window = Window.Create(options);
+        window.Load += Load;
+        window.Render += Render;
+        window.Run();
+        window.Dispose();
+    }
+
+    static void Load()
+    {
+        input = window.CreateInput();
+        input.Keyboards[0].KeyDown += OnKeyDown;
+
+        gl = GL.GetApi(window);
+        gl.PointSize(POINT_SIZE);
+
+        shader = new Shader("res/particle.vert", "res/particle.frag");
+        projection = Matrix4x4.CreateOrthographicOffCenter(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, -1f, 1f);
+
+        SetupBuffers();
+        SpawnParticles();
+
+        igcontroller = new ImGuiController(gl, window, input);
+    }
+
+    static void Render(double deltaTime)
+    {
+        igcontroller.Update((float)deltaTime);
+        UpdateParticles();
+        RenderParticles();
+        ImGui.ShowDemoWindow();
+        igcontroller.Render();
+        Console.WriteLine(particles.Count + " - " + (1f / (float)deltaTime));
+    }
+
+    static void UpdateParticles()
+    {
+        BuildHashGrid();
+        ComputeDensityPressure();
+        ComputeForces();
+        Integrate();
+    }
+
+    static void RenderParticles()
+    {
+        // clear
+        gl.ClearColor(Color.White);
+        gl.Clear(ClearBufferMask.ColorBufferBit);
+
+        if (particles.Count <= 0) return;
+
+        // shader
+        shader.Use();
+        shader.SetMatrix4("projection", projection);
+
+        // calculate min and max pressure
+        float minPressure = particles.Min(p => p.pressure);
+        float maxPressure = particles.Max(p => p.pressure);
+        shader.SetFloat("minPressure", minPressure);
+        shader.SetFloat("maxPressure", maxPressure);
+
+        // particles
+        gl.BindVertexArray(vao);
+        
+        // position buffer
+        float[] position_buffer = PositionFloatArray();
+        fixed (void* ptr = &position_buffer[0])
+        {
+            gl.BindBuffer(GLEnum.ArrayBuffer, position_vbo);
+            gl.BufferSubData(GLEnum.ArrayBuffer, 0, (nuint)(position_buffer.Length * sizeof(float)), ptr);
+        }
+
+        // pressure buffer
+        float[] pressure_buffer = PressureFloatArray();
+        fixed (void* ptr = &pressure_buffer[0])
+        {
+            gl.BindBuffer(GLEnum.ArrayBuffer, pressure_vbo);
+            gl.BufferSubData(GLEnum.ArrayBuffer, 0, (nuint)(pressure_buffer.Length * sizeof(float)), ptr);
+        }
+
+        gl.DrawArrays(GLEnum.Points, 0, (uint)particles.Count);
+
+        gl.BindVertexArray(0);
+    }
+
     static Vector2 CellFromParticle(Particle particle)
     {
         int x = (int)(particle.position.X / CELL_SIZE);
@@ -113,38 +205,6 @@ public static unsafe class Program
         return neighborHashes;
     }
 
-    static void Main()
-    {
-        var options = WindowOptions.Default;
-        options.API = new(ContextAPI.OpenGL, new APIVersion(3, 3));
-        options.Size = new Vector2D<int>(WINDOW_WIDTH, WINDOW_HEIGHT);
-        options.Title = "Fluid Simulation";
-        options.VSync = true;
-        options.WindowBorder = WindowBorder.Fixed;
-        window = Window.Create(options);
-        window.Load += Load;
-        window.Render += Render;
-        window.Run();
-        window.Dispose();
-    }
-
-    static void Load()
-    {
-        input = window.CreateInput();
-        input.Keyboards[0].KeyDown += OnKeyDown;
-
-        gl = GL.GetApi(window);
-        gl.PointSize(POINT_SIZE);
-
-        shader = new Shader("res/particle.vert", "res/particle.frag");
-        projection = Matrix4x4.CreateOrthographicOffCenter(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, -1f, 1f);
-
-        SetupBuffers();
-        SpawnParticles();
-
-        igcontroller = new ImGuiController(gl, window, input);
-    }
-
     static void SetupBuffers()
     {
         vao = gl.GenVertexArray();
@@ -165,16 +225,6 @@ public static unsafe class Program
         gl.VertexAttribPointer(1, 1, GLEnum.Float, false, sizeof(float), 0);
 
         gl.BindVertexArray(0);
-    }
-
-    static void Render(double deltaTime)
-    {
-        igcontroller.Update((float)deltaTime);
-        UpdateSimulation();
-        RenderSimulation();
-        ImGui.ShowDemoWindow();
-        igcontroller.Render();
-        Console.WriteLine(particles.Count + " - " + (1f / (float)deltaTime));
     }
 
     static void SpawnParticles()
@@ -293,14 +343,6 @@ public static unsafe class Program
         });
     }
 
-    static void UpdateSimulation()
-    {
-        BuildHashGrid();
-        ComputeDensityPressure();
-        ComputeForces();
-        Integrate();
-    }
-
     static float[] PositionFloatArray()
     {
         int count = particles.Count;
@@ -318,48 +360,6 @@ public static unsafe class Program
         float[] result = new float[particles.Count];
         for (int i = 0; i < particles.Count; i++) result[i] = particles[i].pressure;
         return result;
-    }
-
-    static void RenderSimulation()
-    {
-        // clear
-        gl.ClearColor(Color.White);
-        gl.Clear(ClearBufferMask.ColorBufferBit);
-
-        if (particles.Count <= 0) return;
-
-        // shader
-        shader.Use();
-        shader.SetMatrix4("projection", projection);
-
-        // calculate min and max pressure
-        float minPressure = particles.Min(p => p.pressure);
-        float maxPressure = particles.Max(p => p.pressure);
-        shader.SetFloat("minPressure", minPressure);
-        shader.SetFloat("maxPressure", maxPressure);
-
-        // particles
-        gl.BindVertexArray(vao);
-        
-        // position buffer
-        float[] position_buffer = PositionFloatArray();
-        fixed (void* ptr = &position_buffer[0])
-        {
-            gl.BindBuffer(GLEnum.ArrayBuffer, position_vbo);
-            gl.BufferSubData(GLEnum.ArrayBuffer, 0, (nuint)(position_buffer.Length * sizeof(float)), ptr);
-        }
-
-        // pressure buffer
-        float[] pressure_buffer = PressureFloatArray();
-        fixed (void* ptr = &pressure_buffer[0])
-        {
-            gl.BindBuffer(GLEnum.ArrayBuffer, pressure_vbo);
-            gl.BufferSubData(GLEnum.ArrayBuffer, 0, (nuint)(pressure_buffer.Length * sizeof(float)), ptr);
-        }
-
-        gl.DrawArrays(GLEnum.Points, 0, (uint)particles.Count);
-
-        gl.BindVertexArray(0);
     }
 
     static void OnKeyDown(IKeyboard keyboard, Key key, int idk)
