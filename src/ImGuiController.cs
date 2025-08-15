@@ -126,7 +126,7 @@ public unsafe class ImGuiController
         io.MouseWheel = wheel.Y;
         io.MouseWheelH = wheel.X;
 
-        foreach (var key in (Key[])Enum.GetValues(typeof(Key)))
+        foreach (var key in Enum.GetValues<Key>())
         {
             if (key == Key.Unknown) continue;
             io.AddKeyEvent(ToImGuiKey(key), keyboardState.IsKeyPressed(key));
