@@ -286,15 +286,14 @@ public static unsafe class Program
 
     static float[] ToFloatArray()
     {
-        List<float> list = [];
-
-        foreach (var particle in particles)
+        int count = particles.Count;
+        float[] result = new float[count * 2];
+        for (int i = 0; i < count; i++)
         {
-            list.Add(particle.position.X);
-            list.Add(particle.position.Y);
+            result[i * 2] = particles[i].position.X;
+            result[i * 2 + 1] = particles[i].position.Y;
         }
-
-        return list.ToArray();
+        return result;
     }
 
     static void RenderSimulation()
