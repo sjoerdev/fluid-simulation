@@ -33,6 +33,12 @@ public static unsafe class Program
     public static IInputContext input;
     public static ImGuiController igcontroller;
 
+    // framerate
+    static List<float> fps_history = [];
+    static float fps_rate = 0.1f;
+    static float fps_average;
+    static float fps_timer;
+
     // opengl buffers
     static uint vao;
     static uint position_vbo;
@@ -49,6 +55,7 @@ public static unsafe class Program
     static float PARTICLE_MASS = 2.5f;
     static float VISCOSITY = 200;
     static float INTIGRATION_TIMESTEP = 0.0007f;
+    static float SIMULATION_SPEED_FACTOR = 1f;
 
     // smoothing kernels and gradients
     static float POLY6 = 4.0f / (MathF.PI * MathF.Pow(KERNEL_RADIUS, 8.0f));
@@ -107,11 +114,25 @@ public static unsafe class Program
     static void Render(double deltaTime)
     {
         igcontroller.Update((float)deltaTime);
+
+        TrackFramesPerSecond((float)deltaTime);
         UpdateParticles();
         RenderParticles();
-        ImGui.ShowDemoWindow();
+
+        ImGui.SetNextWindowSize(new Vector2(280, 0), ImGuiCond.FirstUseEver);
+        ImGui.SetNextWindowPos(new Vector2(16, 16), ImGuiCond.FirstUseEver);
+        ImGui.Begin("settings");
+
+        ImGui.Text("fps: " + fps_average.ToString("0"));
+        ImGui.Text($"particles: {particles.Count} / {MAX_PARTICLES}");
+
+        ImGui.SliderFloat("gravity", ref GRAVITY, 0, -40);
+        ImGui.SliderFloat("viscosity", ref VISCOSITY, 200, 800);
+        ImGui.SliderFloat("speed", ref SIMULATION_SPEED_FACTOR, 0.1f, 4f);
+
+        ImGui.End();
+        
         igcontroller.Render();
-        Console.WriteLine(particles.Count + " - " + (1f / (float)deltaTime));
     }
 
     static void UpdateParticles()
@@ -162,6 +183,21 @@ public static unsafe class Program
         gl.DrawArrays(GLEnum.Points, 0, (uint)particles.Count);
 
         gl.BindVertexArray(0);
+    }
+
+    static void TrackFramesPerSecond(float delta)
+    {
+        if (fps_timer < fps_rate)
+        {
+            fps_history.Add(1f / delta);
+            fps_timer += delta;
+        }
+        else
+        {
+            fps_average = fps_history.Average();
+            fps_history.Clear();
+            fps_timer = 0f;
+        }
     }
 
     static Vector2 CellFromParticle(Particle particle)
@@ -316,8 +352,8 @@ public static unsafe class Program
             var particle = particles[i];
 
             // forward Euler integration
-            particle.velocity += INTIGRATION_TIMESTEP * particle.force / particle.density;
-            particle.position += INTIGRATION_TIMESTEP * particle.velocity;
+            particle.velocity += INTIGRATION_TIMESTEP * SIMULATION_SPEED_FACTOR * particle.force / particle.density;
+            particle.position += INTIGRATION_TIMESTEP * SIMULATION_SPEED_FACTOR * particle.velocity;
 
             // enforce boundary conditions
             if (particle.position.X - BOUNDARY_EPSILON < 0.0f)
