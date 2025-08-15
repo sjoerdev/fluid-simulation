@@ -4,6 +4,7 @@ using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
+using Hexa.NET.ImGui;
 
 namespace Project;
 
@@ -30,6 +31,7 @@ public static unsafe class Program
     public static GL gl;
     public static IWindow window;
     public static IInputContext input;
+    public static ImGuiController igcontroller;
 
     // opengl buffers
     static uint vao;
@@ -139,6 +141,8 @@ public static unsafe class Program
 
         SetupBuffers();
         SpawnParticles();
+
+        igcontroller = new ImGuiController(gl, window, input);
     }
 
     static void SetupBuffers()
@@ -165,8 +169,11 @@ public static unsafe class Program
 
     static void Render(double deltaTime)
     {
+        igcontroller.Update((float)deltaTime);
         UpdateSimulation();
         RenderSimulation();
+        ImGui.ShowDemoWindow();
+        igcontroller.Render();
         Console.WriteLine(particles.Count + " - " + (1f / (float)deltaTime));
     }
 
