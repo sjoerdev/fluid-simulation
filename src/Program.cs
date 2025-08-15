@@ -2,7 +2,7 @@ using System.Numerics;
 using System.Drawing;
 using Silk.NET.Input;
 using Silk.NET.Maths;
-using Silk.NET.OpenGL.Legacy;
+using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 
 namespace Project;
@@ -25,11 +25,17 @@ public class Particle
     }
 };
 
-public static class Program
+public static unsafe class Program
 {
     public static GL gl;
     public static IWindow window;
     public static IInputContext input;
+
+    // opengl buffers
+    static uint vao;
+    static uint vbo;
+    static Shader shader;
+    static Matrix4x4 projection;
 
     // solver parameters
     static float GRAVITY = -10;
@@ -107,7 +113,7 @@ public static class Program
     static void Main()
     {
         var options = WindowOptions.Default;
-        options.API = new(ContextAPI.OpenGL, new APIVersion(2, 1));
+        options.API = new(ContextAPI.OpenGL, new APIVersion(3, 3));
         options.Size = new Vector2D<int>(WINDOW_WIDTH, WINDOW_HEIGHT);
         options.Title = "Fluid Simulation";
         options.VSync = true;
@@ -123,10 +129,32 @@ public static class Program
     {
         input = window.CreateInput();
         input.Keyboards[0].KeyDown += OnKeyDown;
+
         gl = GL.GetApi(window);
-        gl.Enable(GLEnum.PointSmooth);
         gl.PointSize(POINT_SIZE);
+
+        shader = new Shader("res/particle.vert", "res/particle.frag");
+        projection = Matrix4x4.CreateOrthographicOffCenter(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, -1f, 1f);
+
+        SetupBuffers();
         SpawnParticles();
+    }
+
+    static void SetupBuffers()
+    {
+        vao = gl.GenVertexArray();
+        vbo = gl.GenBuffer();
+
+        gl.BindVertexArray(vao);
+        gl.BindBuffer(GLEnum.ArrayBuffer, vbo);
+        
+        gl.BufferData(GLEnum.ArrayBuffer, (nuint)(MAX_PARTICLES * 2 * sizeof(float)), (void*)0, GLEnum.DynamicDraw);
+
+        gl.EnableVertexAttribArray(0);
+        gl.VertexAttribPointer(0, 2, GLEnum.Float, false, 2 * sizeof(float), 0);
+
+        gl.BindVertexArray(0);
+        gl.BindBuffer(GLEnum.ArrayBuffer, 0);
     }
 
     static void Render(double deltaTime)
@@ -256,19 +284,39 @@ public static class Program
         Integrate();
     }
 
+    static float[] ToFloatArray()
+    {
+        List<float> list = [];
+
+        foreach (var particle in particles)
+        {
+            list.Add(particle.position.X);
+            list.Add(particle.position.Y);
+        }
+
+        return list.ToArray();
+    }
+
     static void RenderSimulation()
     {
-        // clear screen
+        // shader
+        shader.Use();
+        shader.SetMatrix4("projection", projection);
+
+        // clear
         gl.ClearColor(Color.White);
         gl.Clear(ClearBufferMask.ColorBufferBit);
-        
-        // render particles as points
-        gl.LoadIdentity();
-        gl.Ortho(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, 0, 1);
-        gl.Color4(0, 0, 0, 1);
-        gl.Begin(GLEnum.Points);
-        foreach (var particle in particles) gl.Vertex2(particle.position.X, particle.position.Y);
-        gl.End();
+
+        // buffer
+        gl.BindVertexArray(vao);
+        gl.BindBuffer(GLEnum.ArrayBuffer, vbo);
+
+        float[] floatarray = ToFloatArray();
+        fixed (void* ptr = &floatarray[0]) gl.BufferSubData(GLEnum.ArrayBuffer, 0, (nuint)(floatarray.Length * sizeof(float)), ptr);
+        gl.DrawArrays(GLEnum.Points, 0, (uint)particles.Count);
+
+        gl.BindVertexArray(0);
+        gl.BindBuffer(GLEnum.ArrayBuffer, 0);
     }
 
     static void OnKeyDown(IKeyboard keyboard, Key key, int idk)
