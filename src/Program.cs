@@ -203,7 +203,9 @@ public static unsafe class Program
                 {
                     Vector2 difference = particle_b.position - particle_a.position;
                     float dotproduct = Vector2.Dot(difference, difference);
-                    if (dotproduct < KERNEL_RADIUS_SQR) particle_a.density += PARTICLE_MASS * POLY6 * MathF.Pow(KERNEL_RADIUS_SQR - dotproduct, 3.0f);
+                    float diff = KERNEL_RADIUS_SQR - dotproduct;
+                    float pdiff = diff * diff * diff;
+                    if (dotproduct < KERNEL_RADIUS_SQR) particle_a.density += PARTICLE_MASS * POLY6 * pdiff;
                 }
             }
 
@@ -231,7 +233,9 @@ public static unsafe class Program
                     float distance = Vector2.Distance(particle_a.position, particle_b.position);
                     if (distance < KERNEL_RADIUS)
                     {
-                        pressure_force += -Vector2.Normalize(difference) * PARTICLE_MASS * (particle_a.pressure + particle_b.pressure) / (2.0f * particle_b.density) * SPIKY_GRAD * MathF.Pow(KERNEL_RADIUS - distance, 3.0f);
+                        float diff = KERNEL_RADIUS - distance;
+                        float pdiff = diff * diff * diff;
+                        pressure_force += -Vector2.Normalize(difference) * PARTICLE_MASS * (particle_a.pressure + particle_b.pressure) / (2.0f * particle_b.density) * SPIKY_GRAD * pdiff;
                         viscosity_force += VISCOSITY * PARTICLE_MASS * (particle_b.velocity - particle_a.velocity) / particle_b.density * VISC_LAP * (KERNEL_RADIUS - distance);
                     }
                 }
