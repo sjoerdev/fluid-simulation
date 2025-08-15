@@ -33,7 +33,8 @@ public static unsafe class Program
 
     // opengl buffers
     static uint vao;
-    static uint vbo;
+    static uint position_vbo;
+    static uint pressure_vbo;
     static Shader shader;
     static Matrix4x4 projection;
 
@@ -143,18 +144,23 @@ public static unsafe class Program
     static void SetupBuffers()
     {
         vao = gl.GenVertexArray();
-        vbo = gl.GenBuffer();
-
         gl.BindVertexArray(vao);
-        gl.BindBuffer(GLEnum.ArrayBuffer, vbo);
-        
-        gl.BufferData(GLEnum.ArrayBuffer, (nuint)(MAX_PARTICLES * 2 * sizeof(float)), (void*)0, GLEnum.DynamicDraw);
 
+        // position buffer
+        position_vbo = gl.GenBuffer();
+        gl.BindBuffer(GLEnum.ArrayBuffer, position_vbo);
+        gl.BufferData(GLEnum.ArrayBuffer, (nuint)(MAX_PARTICLES * 2 * sizeof(float)), (void*)0, GLEnum.DynamicDraw);
         gl.EnableVertexAttribArray(0);
         gl.VertexAttribPointer(0, 2, GLEnum.Float, false, 2 * sizeof(float), 0);
 
+        // pressure buffer
+        pressure_vbo = gl.GenBuffer();
+        gl.BindBuffer(GLEnum.ArrayBuffer, pressure_vbo);
+        gl.BufferData(GLEnum.ArrayBuffer, (nuint)(MAX_PARTICLES * sizeof(float)), (void*)0, GLEnum.DynamicDraw);
+        gl.EnableVertexAttribArray(1);
+        gl.VertexAttribPointer(1, 1, GLEnum.Float, false, sizeof(float), 0);
+
         gl.BindVertexArray(0);
-        gl.BindBuffer(GLEnum.ArrayBuffer, 0);
     }
 
     static void Render(double deltaTime)
@@ -288,7 +294,7 @@ public static unsafe class Program
         Integrate();
     }
 
-    static float[] ToFloatArray()
+    static float[] PositionFloatArray()
     {
         int count = particles.Count;
         float[] result = new float[count * 2];
@@ -300,26 +306,53 @@ public static unsafe class Program
         return result;
     }
 
+    static float[] PressureFloatArray()
+    {
+        float[] result = new float[particles.Count];
+        for (int i = 0; i < particles.Count; i++) result[i] = particles[i].pressure;
+        return result;
+    }
+
     static void RenderSimulation()
     {
-        // shader
-        shader.Use();
-        shader.SetMatrix4("projection", projection);
-
         // clear
         gl.ClearColor(Color.White);
         gl.Clear(ClearBufferMask.ColorBufferBit);
 
-        // buffer
-        gl.BindVertexArray(vao);
-        gl.BindBuffer(GLEnum.ArrayBuffer, vbo);
+        if (particles.Count <= 0) return;
 
-        float[] floatarray = ToFloatArray();
-        fixed (void* ptr = &floatarray[0]) gl.BufferSubData(GLEnum.ArrayBuffer, 0, (nuint)(floatarray.Length * sizeof(float)), ptr);
+        // shader
+        shader.Use();
+        shader.SetMatrix4("projection", projection);
+
+        // calculate min and max pressure
+        float minPressure = particles.Min(p => p.pressure);
+        float maxPressure = particles.Max(p => p.pressure);
+        shader.SetFloat("minPressure", minPressure);
+        shader.SetFloat("maxPressure", maxPressure);
+
+        // particles
+        gl.BindVertexArray(vao);
+        
+        // position buffer
+        float[] position_buffer = PositionFloatArray();
+        fixed (void* ptr = &position_buffer[0])
+        {
+            gl.BindBuffer(GLEnum.ArrayBuffer, position_vbo);
+            gl.BufferSubData(GLEnum.ArrayBuffer, 0, (nuint)(position_buffer.Length * sizeof(float)), ptr);
+        }
+
+        // pressure buffer
+        float[] pressure_buffer = PressureFloatArray();
+        fixed (void* ptr = &pressure_buffer[0])
+        {
+            gl.BindBuffer(GLEnum.ArrayBuffer, pressure_vbo);
+            gl.BufferSubData(GLEnum.ArrayBuffer, 0, (nuint)(pressure_buffer.Length * sizeof(float)), ptr);
+        }
+
         gl.DrawArrays(GLEnum.Points, 0, (uint)particles.Count);
 
         gl.BindVertexArray(0);
-        gl.BindBuffer(GLEnum.ArrayBuffer, 0);
     }
 
     static void OnKeyDown(IKeyboard keyboard, Key key, int idk)
