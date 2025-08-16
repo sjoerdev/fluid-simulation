@@ -48,9 +48,9 @@ public static unsafe class Program
     static Matrix4x4 projection;
 
     // solver parameters
-    static float GRAVITY = -10;
+    static float GRAVITY = -9.8f;
     static float REST_DENSITY = 300;
-    static float GAS_CONSTANT = 2000;
+    static float GAS_CONSTANT = 1800;
     static float KERNEL_RADIUS = 16;
     static float KERNEL_RADIUS_SQR = KERNEL_RADIUS * KERNEL_RADIUS;
     static float PARTICLE_MASS = 2.5f;
@@ -163,8 +163,9 @@ public static unsafe class Program
         shader.SetMatrix4("projection", projection);
 
         // pressure
-        shader.SetFloat("minPressure", -600000 + 0);
-        shader.SetFloat("maxPressure", -600000 + 200);
+        float pressureOffset = GAS_CONSTANT * -REST_DENSITY;
+        shader.SetFloat("minPressure", pressureOffset + 0);
+        shader.SetFloat("maxPressure", pressureOffset + 200);
 
         // particles
         gl.BindVertexArray(vao);
