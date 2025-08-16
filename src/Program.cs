@@ -33,6 +33,9 @@ public static unsafe class Program
     public static IInputContext input;
     public static ImGuiController igcontroller;
 
+    // settings
+    static int max_framerate = 300;
+
     // framerate
     static List<float> fps_history = [];
     static float fps_rate = 0.1f;
@@ -84,8 +87,9 @@ public static unsafe class Program
         options.API = new(ContextAPI.OpenGL, new APIVersion(3, 3));
         options.Size = new Vector2D<int>(WINDOW_WIDTH, WINDOW_HEIGHT);
         options.Title = "Fluid Simulation";
-        options.VSync = true;
+        options.VSync = false;
         options.WindowBorder = WindowBorder.Fixed;
+        options.FramesPerSecond = max_framerate;
         window = Window.Create(options);
         window.Load += Load;
         window.Render += Render;
@@ -127,6 +131,10 @@ public static unsafe class Program
 
         ImGui.SliderFloat("gravity", ref GRAVITY, 0, -40);
         ImGui.SliderFloat("viscosity", ref VISCOSITY, 200, 800);
+
+        max_framerate = (int)window.FramesPerSecond;
+        ImGui.SliderInt("max framerate", ref max_framerate, 30, 800);
+        window.FramesPerSecond = max_framerate;
 
         ImGui.End();
         
