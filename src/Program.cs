@@ -6,6 +6,10 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 
+using Egui;
+using Egui.Widgets;
+using EguiWindow = Egui.Containers.Window;
+
 namespace Project;
 
 public class Particle
@@ -31,6 +35,7 @@ public static unsafe class Program
     public static GL gl;
     public static IWindow window;
     public static IInputContext input;
+    public static EguiController eguiController;
 
     // framerate
     static List<float> fps_history = [];
@@ -107,6 +112,8 @@ public static unsafe class Program
 
         SetupBuffers();
         SpawnParticles();
+
+        eguiController = new EguiController(gl, window, input, 1.25f);
     }
 
     static void Render(double deltaTime)
@@ -115,26 +122,28 @@ public static unsafe class Program
         UpdateParticles();
         RenderParticles();
 
-        /*
-        ImGui.SetNextWindowSize(new Vector2(280, 0), ImGuiCond.FirstUseEver);
-        ImGui.SetNextWindowPos(new Vector2(16, 16), ImGuiCond.FirstUseEver);
-        ImGui.Begin("settings");
+        var contextAction = (Context context) =>
+        {
+            new EguiWindow("simulation").Show(context, (ui) =>
+            {
+                ui.Label("fps: " + fps_average.ToString("0"));
+                ui.Label($"particles: {particles.Count} / {MAX_PARTICLES}");
 
-        ImGui.Text("fps: " + fps_average.ToString("0"));
-        ImGui.Text($"particles: {particles.Count} / {MAX_PARTICLES}");
+                ui.Add(new Slider<float>(ref GRAVITY, 0, -40).Text("gravity"));
+                ui.Add(new Slider<float>(ref VISCOSITY, 100, 500).Text("viscosity"));
 
-        ImGui.SliderFloat("gravity", ref GRAVITY, 0, -40);
-        ImGui.SliderFloat("viscosity", ref VISCOSITY, 100, 500);
+                fps_max = (int)window.FramesPerSecond;
+                ui.Add(new Slider<int>(ref fps_max, 30, 800).Text("max fps"));
+                window.FramesPerSecond = fps_max;
 
-        fps_max = (int)window.FramesPerSecond;
-        ImGui.SliderInt("max fps", ref fps_max, 30, 800);
-        window.FramesPerSecond = fps_max;
+                if (ui.Button("spawn particles").Clicked) SpawnParticles();
+                if (ui.Button("clear particles").Clicked) particles.Clear();
+            });
 
-        if (ImGui.Button("spawn particles")) SpawnParticles();
-        if (ImGui.Button("clear particles")) particles.Clear();
+            new EguiWindow("egui test").Show(context, (ui) => context.SettingsUi(ui));
+        };
 
-        ImGui.End();
-        */
+        eguiController.Render(contextAction);
     }
 
     static void UpdateParticles()
@@ -400,9 +409,9 @@ public static unsafe class Program
         return result;
     }
 
-    static void OnKeyDown(IKeyboard keyboard, Key key, int idk)
+    static void OnKeyDown(IKeyboard keyboard, Silk.NET.Input.Key key, int idk)
     {
-        if (key == Key.Space) SpawnParticles();
-        if (key == Key.R) particles.Clear();
+        if (key == Silk.NET.Input.Key.Space) SpawnParticles();
+        if (key == Silk.NET.Input.Key.R) particles.Clear();
     }
 }

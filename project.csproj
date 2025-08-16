@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Egui.NET" Version="0.3.4" />
     <PackageReference Include="Silk.NET.Input" Version="2.22.0" />
     <PackageReference Include="Silk.NET.Input.Extensions" Version="2.22.0" />
     <PackageReference Include="Silk.NET.Maths" Version="2.22.0" />
