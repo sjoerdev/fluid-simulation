@@ -14,5 +14,5 @@ void main()
     gl_Position = projection * vec4(aPos, 0.0, 1.0);
 
     float clamped_pressure = clamp((aPressure - minPressure) / (maxPressure - minPressure), 0.0, 1.0);
-    VertColor = mix(vec3(0,0,0), vec3(1,0,0), clamped_pressure);
+    VertColor = mix(vec3(0.0, 0.4, 1), vec3(1, 1, 1), clamped_pressure);
 }

@@ -153,7 +153,7 @@ public static unsafe class Program
     static void RenderParticles()
     {
         // clear
-        gl.ClearColor(Color.White);
+        gl.ClearColor(0.1f, 0.1f, 0.1f, 1);
         gl.Clear(ClearBufferMask.ColorBufferBit);
 
         if (particles.Count <= 0) return;
@@ -162,11 +162,9 @@ public static unsafe class Program
         shader.Use();
         shader.SetMatrix4("projection", projection);
 
-        // calculate min and max pressure
-        float minPressure = particles.Min(p => p.pressure);
-        float maxPressure = particles.Max(p => p.pressure);
-        shader.SetFloat("minPressure", minPressure);
-        shader.SetFloat("maxPressure", maxPressure);
+        // pressure
+        shader.SetFloat("minPressure", -600000 + 0);
+        shader.SetFloat("maxPressure", -600000 + 200);
 
         // particles
         gl.BindVertexArray(vao);
