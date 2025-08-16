@@ -128,7 +128,7 @@ public static unsafe class Program
         ImGui.Text($"particles: {particles.Count} / {MAX_PARTICLES}");
 
         ImGui.SliderFloat("gravity", ref GRAVITY, 0, -40);
-        ImGui.SliderFloat("viscosity", ref VISCOSITY, 200, 800);
+        ImGui.SliderFloat("viscosity", ref VISCOSITY, 100, 500);
 
         fps_max = (int)window.FramesPerSecond;
         ImGui.SliderInt("max fps", ref fps_max, 30, 800);
