@@ -55,7 +55,6 @@ public static unsafe class Program
     static float PARTICLE_MASS = 2.5f;
     static float VISCOSITY = 200;
     static float INTIGRATION_TIMESTEP = 0.0007f;
-    static float SIMULATION_SPEED_FACTOR = 1f;
 
     // smoothing kernels and gradients
     static float POLY6 = 4.0f / (MathF.PI * MathF.Pow(KERNEL_RADIUS, 8.0f));
@@ -128,7 +127,6 @@ public static unsafe class Program
 
         ImGui.SliderFloat("gravity", ref GRAVITY, 0, -40);
         ImGui.SliderFloat("viscosity", ref VISCOSITY, 200, 800);
-        ImGui.SliderFloat("speed", ref SIMULATION_SPEED_FACTOR, 0.1f, 4f);
 
         ImGui.End();
         
@@ -352,8 +350,8 @@ public static unsafe class Program
             var particle = particles[i];
 
             // forward Euler integration
-            particle.velocity += INTIGRATION_TIMESTEP * SIMULATION_SPEED_FACTOR * particle.force / particle.density;
-            particle.position += INTIGRATION_TIMESTEP * SIMULATION_SPEED_FACTOR * particle.velocity;
+            particle.velocity += INTIGRATION_TIMESTEP * particle.force / particle.density;
+            particle.position += INTIGRATION_TIMESTEP * particle.velocity;
 
             // enforce boundary conditions
             if (particle.position.X - BOUNDARY_EPSILON < 0.0f)
