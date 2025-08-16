@@ -1,10 +1,10 @@
 using System.Numerics;
 using System.Drawing;
+
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
-using Hexa.NET.ImGui;
 
 namespace Project;
 
@@ -31,7 +31,6 @@ public static unsafe class Program
     public static GL gl;
     public static IWindow window;
     public static IInputContext input;
-    public static ImGuiController igcontroller;
 
     // framerate
     static List<float> fps_history = [];
@@ -108,18 +107,15 @@ public static unsafe class Program
 
         SetupBuffers();
         SpawnParticles();
-
-        igcontroller = new ImGuiController(gl, window, input);
     }
 
     static void Render(double deltaTime)
     {
-        igcontroller.Update((float)deltaTime);
-
         TrackFramesPerSecond((float)deltaTime);
         UpdateParticles();
         RenderParticles();
 
+        /*
         ImGui.SetNextWindowSize(new Vector2(280, 0), ImGuiCond.FirstUseEver);
         ImGui.SetNextWindowPos(new Vector2(16, 16), ImGuiCond.FirstUseEver);
         ImGui.Begin("settings");
@@ -138,8 +134,7 @@ public static unsafe class Program
         if (ImGui.Button("clear particles")) particles.Clear();
 
         ImGui.End();
-        
-        igcontroller.Render();
+        */
     }
 
     static void UpdateParticles()
