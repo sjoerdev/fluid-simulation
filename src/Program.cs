@@ -6,6 +6,10 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 
+using Egui;
+using Egui.Widgets;
+using EguiWindow = Egui.Containers.Window;
+
 namespace Project;
 
 public class Particle
@@ -31,6 +35,7 @@ public static unsafe class Program
     public static GL gl;
     public static IWindow window;
     public static IInputContext input;
+    public static EguiController eguiController;
 
     // framerate
     static List<float> fps_history = [];
@@ -107,6 +112,8 @@ public static unsafe class Program
 
         SetupBuffers();
         SpawnParticles();
+
+        eguiController = new EguiController(gl, window, input);
     }
 
     static void Render(double deltaTime)
@@ -114,6 +121,29 @@ public static unsafe class Program
         TrackFramesPerSecond((float)deltaTime);
         UpdateParticles();
         RenderParticles();
+
+        var contextAction = (Context context) =>
+        {
+            new EguiWindow("simulation").Show(context, (ui) =>
+            {
+                ui.Label("fps: " + fps_average.ToString("0"));
+                ui.Label($"particles: {particles.Count} / {MAX_PARTICLES}");
+
+                ui.Add(new Slider<float>(ref GRAVITY, 0, -40).Text("gravity"));
+                ui.Add(new Slider<float>(ref VISCOSITY, 100, 500).Text("viscosity"));
+
+                fps_max = (int)window.FramesPerSecond;
+                ui.Add(new Slider<int>(ref fps_max, 30, 800).Text("max fps"));
+                window.FramesPerSecond = fps_max;
+
+                if (ui.Button("spawn particles").Clicked) SpawnParticles();
+                if (ui.Button("clear particles").Clicked) particles.Clear();
+            });
+
+            new EguiWindow("egui test").Show(context, (ui) => context.SettingsUi(ui));
+        };
+
+        eguiController.Render(contextAction);
 
         /*
         ImGui.SetNextWindowSize(new Vector2(280, 0), ImGuiCond.FirstUseEver);
@@ -400,9 +430,9 @@ public static unsafe class Program
         return result;
     }
 
-    static void OnKeyDown(IKeyboard keyboard, Key key, int idk)
+    static void OnKeyDown(IKeyboard keyboard, Silk.NET.Input.Key key, int idk)
     {
-        if (key == Key.Space) SpawnParticles();
-        if (key == Key.R) particles.Clear();
+        if (key == Silk.NET.Input.Key.Space) SpawnParticles();
+        if (key == Silk.NET.Input.Key.R) particles.Clear();
     }
 }
