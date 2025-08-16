@@ -33,14 +33,12 @@ public static unsafe class Program
     public static IInputContext input;
     public static ImGuiController igcontroller;
 
-    // settings
-    static int max_framerate = 300;
-
     // framerate
     static List<float> fps_history = [];
-    static float fps_rate = 0.1f;
+    static float fps_show_rate = 0.1f;
     static float fps_average;
     static float fps_timer;
+    static int fps_max = 300;
 
     // opengl buffers
     static uint vao;
@@ -89,7 +87,7 @@ public static unsafe class Program
         options.Title = "Fluid Simulation";
         options.VSync = false;
         options.WindowBorder = WindowBorder.Fixed;
-        options.FramesPerSecond = max_framerate;
+        options.FramesPerSecond = fps_max;
         window = Window.Create(options);
         window.Load += Load;
         window.Render += Render;
@@ -132,9 +130,12 @@ public static unsafe class Program
         ImGui.SliderFloat("gravity", ref GRAVITY, 0, -40);
         ImGui.SliderFloat("viscosity", ref VISCOSITY, 200, 800);
 
-        max_framerate = (int)window.FramesPerSecond;
-        ImGui.SliderInt("max framerate", ref max_framerate, 30, 800);
-        window.FramesPerSecond = max_framerate;
+        fps_max = (int)window.FramesPerSecond;
+        ImGui.SliderInt("max fps", ref fps_max, 30, 800);
+        window.FramesPerSecond = fps_max;
+
+        if (ImGui.Button("spawn particles")) SpawnParticles();
+        if (ImGui.Button("clear particles")) particles.Clear();
 
         ImGui.End();
         
@@ -193,7 +194,7 @@ public static unsafe class Program
 
     static void TrackFramesPerSecond(float delta)
     {
-        if (fps_timer < fps_rate)
+        if (fps_timer < fps_show_rate)
         {
             fps_history.Add(1f / delta);
             fps_timer += delta;
