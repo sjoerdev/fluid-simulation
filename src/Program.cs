@@ -271,7 +271,7 @@ public static unsafe class Program
 
     static void SpawnParticles()
     {
-        var radius = 400;
+        var radius = 200;
         var center = new Vector2(WINDOW_WIDTH, WINDOW_HEIGHT) / 2f;
         var random = new Random();
         var spacing = KERNEL_RADIUS;
