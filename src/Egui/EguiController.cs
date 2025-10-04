@@ -284,8 +284,9 @@ unsafe public class EguiController
     {
         gl.Disable(GLEnum.ScissorTest);
         gl.Viewport(0, 0, (uint)window.FramebufferSize.X, (uint)window.FramebufferSize.Y);
-        var clippedPrimitives = eguiContext.Tessellate(output.Shapes.ToArray(), output.PixelsPerPoint);
-        eguiRenderer.RenderAndUpdateTextures((uint)window.FramebufferSize.X, (uint)window.FramebufferSize.Y, output.PixelsPerPoint, clippedPrimitives, output.TexturesDelta);
+        var clippedPrimitives = eguiContext.Tessellate(output.Shapes.ToImmutableArray(), output.PixelsPerPoint);
+        var clippedPrimitivesReadOnly = clippedPrimitives.ToArray();
+        eguiRenderer.RenderAndUpdateTextures((uint)window.FramebufferSize.X, (uint)window.FramebufferSize.Y, output.PixelsPerPoint, clippedPrimitivesReadOnly, output.TexturesDelta);
         gl.Disable(GLEnum.ScissorTest);
     }
 }
