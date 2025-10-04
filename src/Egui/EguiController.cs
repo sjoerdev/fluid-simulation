@@ -31,7 +31,7 @@ unsafe public class EguiController
     bool shift = false;
     bool alt = false;
     bool ctrl = false;
-    bool focus = false;   
+    bool focus = false;
 
     public EguiController(GL gl, IWindow window, IInputContext input, float displayScaleFactor = 1f)
     {
