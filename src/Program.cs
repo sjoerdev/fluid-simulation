@@ -345,8 +345,15 @@ public static unsafe class Program
                 }
             }
 
+            var mouse_pos = new Vector2(input.Mice[0].Position.X, WINDOW_HEIGHT - input.Mice[0].Position.Y);
+            var mouse_dir = Vector2.Normalize(mouse_pos - particle_a.position);
+            var mouse_dist = Vector2.Distance(mouse_pos, particle_a.position);
+            var mouse_down = input.Mice[0].IsButtonPressed(0);
+            var mouse_force = (mouse_down && mouse_dist < 200) ? mouse_dir * PARTICLE_MASS / particle_a.density * 30.0f : Vector2.Zero;
+
             Vector2 gravity_force = new Vector2(0, GRAVITY) * PARTICLE_MASS / particle_a.density;
-            particle_a.force = pressure_force + viscosity_force + gravity_force;
+
+            particle_a.force = pressure_force + viscosity_force + gravity_force + mouse_force;
         });
     }
 
