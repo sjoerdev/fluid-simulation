@@ -6,7 +6,10 @@ This is a smoothed particle hydrodynamics simulation
 - It can smoothly handle up to 20k particles
 
 ## Showcase
-https://github.com/user-attachments/assets/9e318653-5ec1-4dc7-9071-c8a26ff5f471
+
+[](https://github.com/user-attachments/assets/9e318653-5ec1-4dc7-9071-c8a26ff5f471)
+
+<video controls><source alt="https://github.com/user-attachments/assets/9e318653-5ec1-4dc7-9071-c8a26ff5f471" src="https://raw.githubusercontent.com/sjoerdev/fluid-simulation/main/fluid.mp4" type="video/mp4"></video>
 
 ## Building:
 
