@@ -7,7 +7,7 @@ This is a smoothed particle hydrodynamics simulation
 
 ## Showcase
 
-https://github.com/user-attachments/assets/9e318653-5ec1-4dc7-9071-c8a26ff5f471
+[](https://github.com/user-attachments/assets/9e318653-5ec1-4dc7-9071-c8a26ff5f471)
 
 <video width="100%" controls>
     <source src="https://github.com/user-attachments/assets/9e318653-5ec1-4dc7-9071-c8a26ff5f471" type="video/mp4">
